@@ -1,0 +1,45 @@
+---
+// Renders inside ConverterWidget. Reads live values from the closest [data-widget] ancestor,
+// set by ConverterWidget's own tick() script, and builds a shareable /t/4pm-utc style link.
+---
+<div class="share-link-wrap flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+  <button
+    type="button"
+    class="share-btn tap-target inline-flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 transition active:scale-[0.98] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 sm:w-auto"
+  >
+    <span aria-hidden="true">🔗</span>
+    <span class="btn-label">Copy shareable link</span>
+  </button>
+  <span class="share-hint text-xs text-neutral-400 dark:text-neutral-600"
+    >Sends your exact time in their local zone</span
+  >
+</div>
+
+<script>
+  import { buildShareSlug, withBase } from "../lib/tz-utils";
+
+  document.querySelectorAll<HTMLButtonElement>(".share-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const widget = btn.closest<HTMLElement>("[data-widget]");
+      if (!widget) return;
+      const hour24 = parseInt(widget.dataset.currentHour24 ?? "12", 10);
+      const fromKey = widget.dataset.fromTzKey ?? "utc";
+      const slug = buildShareSlug(hour24, fromKey);
+      const url = `${location.origin}${withBase(`/t/${slug}`)}`;
+
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // clipboard blocked (older webview) — fall back to a visible prompt
+        window.prompt("Copy this link:", url);
+      }
+
+      const label = btn.querySelector(".btn-label");
+      if (label) {
+        const original = label.textContent;
+        label.textContent = "Link copied!";
+        setTimeout(() => (label.textContent = original), 1800);
+      }
+    });
+  });
+</script>

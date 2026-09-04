@@ -1,0 +1,61 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ConverterWidget from "../components/ConverterWidget.astro";
+import AdSlot from "../components/AdSlot.astro";
+import { TIMEZONES } from "../data/timezones";
+
+export function getStaticPaths() {
+  const paths = [];
+  for (const from of TIMEZONES) {
+    for (const to of TIMEZONES) {
+      if (from.slug === to.slug) continue;
+      paths.push({
+        params: { from: from.slug, to: to.slug },
+        props: { fromTz: from, toTz: to },
+      });
+    }
+  }
+  return paths;
+}
+
+const { fromTz, toTz } = Astro.props;
+
+const title = `${fromTz.city} to ${toTz.city} Time Zone Converter — ${fromTz.abbr} to ${toTz.abbr}`;
+const description = `Convert ${fromTz.city} (${fromTz.abbr}) time to ${toTz.city} (${toTz.abbr}) instantly. Live clocks, day/night visual, and a one-click shareable meeting link.`;
+const canonicalSlug = `${fromTz.slug}-to-${toTz.slug}`;
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: title,
+  applicationCategory: "UtilitiesApplication",
+  operatingSystem: "Any",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  description,
+};
+---
+<Layout title={title} description={description} canonicalSlug={canonicalSlug} schema={schema}>
+  <main>
+    <h1 class="mx-auto max-w-3xl px-4 pt-8 text-center text-xl font-semibold sm:pt-10 sm:text-2xl">
+      {fromTz.city} to {toTz.city} Time Zone Converter
+    </h1>
+    <p class="mx-auto mt-2 max-w-3xl px-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
+      {fromTz.abbr} → {toTz.abbr} · Auto-updates every second · No sign-up needed
+    </p>
+
+    <ConverterWidget fromTz={fromTz} toTz={toTz} />
+
+    <AdSlot position="in-content" />
+
+    <section class="mx-auto max-w-3xl px-4 pb-12 text-sm text-neutral-600 dark:text-neutral-400">
+      <h2 class="mb-2 text-base font-semibold text-neutral-800 dark:text-neutral-200">
+        Planning a call between {fromTz.city} and {toTz.city}?
+      </h2>
+      <p>
+        {fromTz.city} runs on {fromTz.abbr}, while {toTz.city} uses {toTz.abbr}. Use the slider above
+        to see daylight hours at a glance, then tap "Copy shareable link" to send an exact meeting
+        time that auto-converts to whoever opens it — wherever they are.
+      </p>
+    </section>
+  </main>
+</Layout>

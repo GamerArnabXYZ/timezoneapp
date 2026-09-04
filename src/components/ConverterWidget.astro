@@ -1,0 +1,118 @@
+---
+import DayNightSlider from "./DayNightSlider.astro";
+import ShareLink from "./ShareLink.astro";
+import { formatTime, formatFullDate, diffHours, withBase } from "../lib/tz-utils";
+import type { TZCity } from "../data/timezones";
+
+interface Props {
+  fromTz: TZCity;
+  toTz: TZCity;
+}
+const { fromTz, toTz } = Astro.props;
+
+const diff = diffHours(fromTz.tz, toTz.tz);
+const diffLabel =
+  diff === 0 ? "Same time" : `${diff > 0 ? "+" : ""}${diff}h ${diff > 0 ? "ahead" : "behind"}`;
+
+const swapHref = withBase(`/${toTz.slug}-to-${fromTz.slug}`);
+---
+<section
+  data-widget
+  data-from-tz-key={fromTz.slug}
+  data-to-tz-key={toTz.slug}
+  data-current-hour24="12"
+  class="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12"
+>
+  <!-- Local-time auto-detect banner (Zero Input) — hidden until JS confirms a 3rd distinct zone -->
+  <p
+    class="local-tz-banner mb-4 hidden rounded-xl border border-accent-500/20 bg-accent-500/5 px-4 py-2.5 text-center text-sm text-accent-600 dark:text-accent-500"
+  ></p>
+
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+    <!-- FROM card -->
+    <div class="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+      <p class="text-sm text-neutral-500 dark:text-neutral-400">{fromTz.city}, {fromTz.country}</p>
+      <p class="clock-from mt-1 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+        {formatTime(fromTz.tz)}
+      </p>
+      <p class="date-from mt-1 text-xs text-neutral-400 dark:text-neutral-600">{formatFullDate(fromTz.tz)}</p>
+      <div class="mt-4">
+        <DayNightSlider tz={fromTz.tz} label={fromTz.abbr} id="from" />
+      </div>
+    </div>
+
+    <!-- Swap button -->
+    <a
+      href={swapHref}
+      aria-label={`Swap to ${toTz.city} to ${fromTz.city}`}
+      class="swap-btn tap-target mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-lg transition hover:rotate-180 active:scale-90 dark:border-neutral-800 dark:bg-neutral-900 sm:h-12 sm:w-12"
+    >
+      ⇄
+    </a>
+
+    <!-- TO card -->
+    <div class="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+      <p class="text-sm text-neutral-500 dark:text-neutral-400">{toTz.city}, {toTz.country}</p>
+      <p class="clock-to mt-1 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+        {formatTime(toTz.tz)}
+      </p>
+      <p class="date-to mt-1 text-xs text-neutral-400 dark:text-neutral-600">{formatFullDate(toTz.tz)}</p>
+      <div class="mt-4">
+        <DayNightSlider tz={toTz.tz} label={toTz.abbr} id="to" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff badge -->
+  <div class="mt-4 flex justify-center">
+    <span
+      class="diff-badge rounded-full border border-neutral-200 px-4 py-1.5 text-xs font-medium text-neutral-600 dark:border-neutral-800 dark:text-neutral-300"
+      >{diffLabel}</span
+    >
+  </div>
+
+  <!-- Share -->
+  <div class="mt-6 border-t border-neutral-100 pt-6 dark:border-neutral-900">
+    <ShareLink />
+  </div>
+</section>
+
+<script define:vars={{ fromTzName: fromTz.tz, toTzName: toTz.tz, fromKey: fromTz.slug, toKey: toTz.slug }}>
+  // Live tick — updates both clocks + diff + share-widget state every second. No page reload needed.
+  function fmtTime(tz) {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", hour12: true }).format(new Date());
+  }
+  function hour24(tz) {
+    return parseInt(
+      new Intl.DateTimeFormat("en-US", { timeZone: tz, hour12: false, hour: "2-digit" }).format(new Date()),
+      10
+    ) % 24;
+  }
+
+  function tick() {
+    const widget = document.querySelector("[data-widget]");
+    if (!widget) return;
+    const clockFrom = widget.querySelector(".clock-from");
+    const clockTo = widget.querySelector(".clock-to");
+    if (clockFrom) clockFrom.textContent = fmtTime(fromTzName);
+    if (clockTo) clockTo.textContent = fmtTime(toTzName);
+    widget.dataset.currentHour24 = String(hour24(fromTzName));
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // Zero-input auto-detect: if visitor's own tz differs from BOTH from/to, show a helper banner.
+  try {
+    const visitorTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (visitorTz && visitorTz !== fromTzName && visitorTz !== toTzName) {
+      const banner = document.querySelector(".local-tz-banner");
+      if (banner) {
+        const time = fmtTime(visitorTz);
+        banner.textContent = `📍 Your local time (${visitorTz.split("/").pop()?.replace("_", " ")}): ${time}`;
+        banner.classList.remove("hidden");
+      }
+    }
+  } catch {
+    // Intl.resolvedOptions unsupported — silently skip, banner stays hidden
+  }
+</script>

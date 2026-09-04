@@ -1,0 +1,95 @@
+---
+// Fully static — no adapter needed. Pre-builds every {hour}{am/pm}-{tzKey} combo (24 x cities).
+// Visitor's OWN local time is still computed 100% client-side (Zero Input, via Intl) at view time.
+import Layout from "../../layouts/Layout.astro";
+import AdSlot from "../../components/AdSlot.astro";
+import { TIMEZONES, findCity } from "../../data/timezones";
+import { buildShareSlug, withBase } from "../../lib/tz-utils";
+
+export function getStaticPaths() {
+  const paths = [];
+  for (const city of TIMEZONES) {
+    for (let hour24 = 0; hour24 < 24; hour24++) {
+      const slug = buildShareSlug(hour24, city.slug);
+      paths.push({ params: { slug }, props: { hour24, city } });
+    }
+  }
+  return paths;
+}
+
+const { hour24, city } = Astro.props;
+const label12 = new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: true }).format(
+  new Date(2026, 0, 1, hour24)
+);
+
+const title = `${label12} ${city.abbr} in Your Local Time`;
+const description = `See what ${label12} in ${city.city} (${city.abbr}) is in your own time zone — auto-detected instantly, no sign-up.`;
+---
+<Layout title={title} description={description} canonicalSlug={`t/${Astro.params.slug}`}>
+  <main class="mx-auto max-w-md px-4 pt-12 text-center sm:pt-16">
+    <p class="text-sm text-neutral-500 dark:text-neutral-400">Someone shared a time with you</p>
+    <p class="mt-2 text-4xl font-semibold tracking-tight">{label12} <span class="text-neutral-400">{city.abbr}</span></p>
+    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{city.city}, {city.country}</p>
+
+    <div
+      id="local-result"
+      class="mt-8 rounded-xl border border-accent-500/30 bg-accent-500/5 p-6"
+      data-hour24={hour24}
+      data-source-tz={city.tz}
+    >
+      <p class="text-xs uppercase tracking-wide text-accent-600 dark:text-accent-500">Your local time</p>
+      <p class="local-time mt-1 text-3xl font-bold tabular-nums">Detecting…</p>
+      <p class="local-date mt-1 text-xs text-neutral-400"></p>
+    </div>
+
+    <a
+      href={withBase("/")}
+      class="tap-target mt-8 inline-flex items-center justify-center rounded-xl border border-neutral-200 px-5 py-3 text-sm font-medium dark:border-neutral-800"
+    >
+      Open full converter →
+    </a>
+  </main>
+
+  <AdSlot position="in-content" />
+</Layout>
+
+<script>
+  const el = document.getElementById("local-result");
+  if (el) {
+    const hour24 = parseInt(el.dataset.hour24 ?? "12", 10);
+    const sourceTz = el.dataset.sourceTz!;
+
+    // Build a Date representing "hour24:00 today" in the SOURCE city's timezone,
+    // then let the browser render it in the visitor's own (auto-detected) local zone.
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(now.getUTCDate()).padStart(2, "0");
+
+    // Compute source tz's current UTC offset to build a correct instant for hour24 in that tz.
+    const offsetPart = new Intl.DateTimeFormat("en-US", {
+      timeZone: sourceTz, timeZoneName: "shortOffset",
+    }).formatToParts(now).find((p) => p.type === "timeZoneName")?.value ?? "GMT+0";
+    const match = offsetPart.match(/GMT([+-]\d+)(?::(\d+))?/);
+    const offH = match ? parseInt(match[1], 10) : 0;
+    const offM = match?.[2] ? parseInt(match[2], 10) : 0;
+    const totalOffsetMin = offH * 60 + (offH < 0 ? -offM : offM);
+
+    const utcMs = Date.UTC(y, now.getUTCMonth(), now.getUTCDate(), hour24, 0, 0) - totalOffsetMin * 60_000;
+    const targetInstant = new Date(utcMs);
+
+    const timeEl = document.querySelector(".local-time");
+    const dateEl = document.querySelector(".local-date");
+    if (timeEl) {
+      timeEl.textContent = new Intl.DateTimeFormat("en-US", {
+        hour: "numeric", minute: "2-digit", hour12: true,
+      }).format(targetInstant);
+    }
+    if (dateEl) {
+      const visitorTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      dateEl.textContent = `${visitorTz.split("/").pop()?.replace("_", " ")} · ${new Intl.DateTimeFormat("en-US", {
+        weekday: "short", month: "short", day: "numeric",
+      }).format(targetInstant)}`;
+    }
+  }
+</script>

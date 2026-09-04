@@ -1,0 +1,70 @@
+---
+import Layout from "../layouts/Layout.astro";
+import AdSlot from "../components/AdSlot.astro";
+import { TIMEZONES } from "../data/timezones";
+import { withBase } from "../lib/tz-utils";
+
+const title = "Universal Time & Timezone Sync — Meeting Planner";
+const description = "Convert time between any two cities instantly. Auto-detects your location, shows day/night visually, and generates one-click shareable meeting links.";
+
+// Curated high-intent pairs shown on homepage (Ahrefs volume-sorted list swap-in later)
+const popular = [
+  ["new-york", "london"], ["london", "new-york"],
+  ["new-york", "mumbai"], ["mumbai", "new-york"],
+  ["los-angeles", "new-york"], ["london", "mumbai"],
+  ["dubai", "mumbai"], ["singapore", "mumbai"],
+  ["tokyo", "new-york"], ["sydney", "new-york"],
+];
+function cityName(slug: string) {
+  return TIMEZONES.find((t) => t.slug === slug)?.city ?? slug;
+}
+---
+<Layout title={title} description={description}>
+  <main class="mx-auto max-w-3xl px-4 pt-10 text-center sm:pt-16">
+    <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Universal Time & Timezone Sync</h1>
+    <p class="mx-auto mt-3 max-w-xl text-sm text-neutral-500 dark:text-neutral-400">
+      Pick two cities, see live day/night clocks, and share the exact meeting time — no sign-up,
+      no manual timezone math.
+    </p>
+
+    <div id="auto-detect-cta" class="mt-6 hidden rounded-xl border border-accent-500/30 bg-accent-500/5 p-4">
+      <p class="text-sm">
+        📍 Looks like you're in <span class="detected-tz font-semibold"></span> —
+        <a href="#popular" class="text-accent-600 underline dark:text-accent-500">jump to popular pairs</a>
+      </p>
+    </div>
+
+    <section id="popular" class="mt-10 text-left">
+      <h2 class="mb-3 text-center text-sm font-semibold uppercase tracking-wide text-neutral-400">
+        Popular conversions
+      </h2>
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {popular.map(([from, to]) => (
+          <a
+            href={withBase(`/${from}-to-${to}`)}
+            class="tap-target flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3.5 text-sm font-medium transition hover:border-accent-500/50 dark:border-neutral-800 dark:bg-neutral-900"
+          >
+            <span>{cityName(from)} → {cityName(to)}</span>
+            <span class="text-neutral-300 dark:text-neutral-700">→</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <AdSlot position="in-content" />
+  </main>
+</Layout>
+
+<script>
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const cta = document.getElementById("auto-detect-cta");
+    const label = document.querySelector(".detected-tz");
+    if (cta && label && tz) {
+      label.textContent = tz.split("/").pop()?.replace("_", " ") ?? tz;
+      cta.classList.remove("hidden");
+    }
+  } catch {
+    /* Intl unsupported — silently skip */
+  }
+</script>
