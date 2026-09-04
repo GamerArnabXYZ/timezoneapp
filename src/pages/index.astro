@@ -20,38 +20,53 @@ function cityName(slug: string) {
 }
 ---
 <Layout title={title} description={description}>
-  <main class="mx-auto max-w-3xl px-4 pt-10 text-center sm:pt-16">
-    <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Universal Time & Timezone Sync</h1>
-    <p class="mx-auto mt-3 max-w-xl text-sm text-neutral-500 dark:text-neutral-400">
-      Pick two cities, see live day/night clocks, and share the exact meeting time — no sign-up,
-      no manual timezone math.
-    </p>
-
-    <div id="auto-detect-cta" class="mt-6 hidden rounded-xl border border-accent-500/30 bg-accent-500/5 p-4">
-      <p class="text-sm">
-        📍 Looks like you're in <span class="detected-tz font-semibold"></span> —
-        <a href="#popular" class="text-accent-600 underline dark:text-accent-500">jump to popular pairs</a>
+  <!-- Hero band — the ONE place the mesh gradient is allowed to exist -->
+  <section class="relative overflow-hidden border-b border-(--hairline)">
+    <div class="mesh-gradient" aria-hidden="true"></div>
+    <div class="relative z-10 mx-auto max-w-3xl px-4 py-16 text-center sm:py-24">
+      <p class="text-mono-eyebrow text-(--mute)">Free · No sign-up · Zero input</p>
+      <h1 class="text-display-xl mt-3 text-(--ink)">Universal Time &amp; Timezone Sync</h1>
+      <p class="text-body-lg mx-auto mt-4 max-w-xl text-(--body)">
+        Pick two cities, see live day/night clocks, and share the exact meeting time — no manual
+        timezone math, ever.
       </p>
-    </div>
 
-    <section id="popular" class="mt-10 text-left">
-      <h2 class="mb-3 text-center text-sm font-semibold uppercase tracking-wide text-neutral-400">
-        Popular conversions
-      </h2>
-      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div id="auto-detect-cta" class="mx-auto mt-6 hidden max-w-md rounded-[12px] border border-(--link-soft) bg-(--link-soft)/40 p-4">
+        <p class="text-body-md text-(--link-deep)">
+          📍 Looks like you're in <span class="detected-tz font-semibold"></span> —
+          <a href="#popular" class="underline">jump to popular pairs</a>
+        </p>
+      </div>
+
+      <a
+        href="#popular"
+        class="tap-target mt-8 inline-flex items-center justify-center rounded-full bg-(--ink) px-6 text-button-lg text-(--canvas) transition active:scale-[0.97]"
+      >
+        Browse conversions
+      </a>
+    </div>
+  </section>
+
+  <main class="mx-auto max-w-3xl px-4 pb-6">
+    <section id="popular" class="pt-12 text-left sm:pt-16">
+      <p class="text-mono-eyebrow text-center text-(--mute)">Popular conversions</p>
+      <h2 class="text-heading-md mt-2 text-center text-(--ink)">Jump straight to a pair</h2>
+      <div class="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {popular.map(([from, to]) => (
           <a
             href={withBase(`/${from}-to-${to}`)}
-            class="tap-target flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3.5 text-sm font-medium transition hover:border-accent-500/50 dark:border-neutral-800 dark:bg-neutral-900"
+            class="tap-target flex items-center justify-between rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) px-4 py-3.5 text-button-md text-(--ink) shadow-[var(--shadow-whisper)] transition hover:border-(--link)"
           >
             <span>{cityName(from)} → {cityName(to)}</span>
-            <span class="text-neutral-300 dark:text-neutral-700">→</span>
+            <span class="text-(--faint)">→</span>
           </a>
         ))}
       </div>
     </section>
 
-    <AdSlot position="in-content" />
+    <div class="mt-8">
+      <AdSlot position="in-content" />
+    </div>
   </main>
 </Layout>
 

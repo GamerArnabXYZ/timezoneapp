@@ -1,22 +1,130 @@
 @import "tailwindcss";
 
-@theme {
-  --color-accent-500: #0ea5e9;
-  --color-accent-600: #0284c7;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+/* ============================================================
+   Design tokens — Vercel Geist system (see DESIGN-vercel.md)
+   Light values from spec; dark values are our own faithful
+   extension of the same ink/canvas/hairline logic, inverted.
+   ============================================================ */
+:root {
+  --canvas: #fafafa;
+  --canvas-elevated: #ffffff;
+  --hairline: #ebebeb;
+  --hairline-soft: #f2f2f2;
+  --ink: #171717;
+  --body: #4d4d4d;
+  --mute: #8f8f8f;
+  --faint: #a1a1a1;
+  --link: #0070f3;
+  --link-deep: #0761d1;
+  --link-soft: #d3e5ff;
+  --violet: #7928ca;
+  --cyan: #50e3c2;
+  --pink: #ff0080;
+  --magenta: #eb367f;
+  --amber: #f9cb28;
+  --shadow-whisper: 0px 1px 1px rgba(0, 0, 0, 0.04);
+  --shadow-floating: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.08);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
 }
 
-:root {
-  color-scheme: light dark;
+.dark {
+  --canvas: #0a0a0a;
+  --canvas-elevated: #151515;
+  --hairline: #262626;
+  --hairline-soft: #1c1c1c;
+  --ink: #fafafa;
+  --body: #a8a8a8;
+  --mute: #797979;
+  --faint: #565656;
+  --link: #3694ff;
+  --link-deep: #62aeff;
+  --link-soft: #123253;
+  --shadow-whisper: 0px 1px 1px rgba(0, 0, 0, 0.5);
+  --shadow-floating: 0px 2px 2px rgba(0, 0, 0, 0.3), 0px 8px 16px -4px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+/* ============================================================
+   Typography scale — exact tokens from DESIGN-vercel.md
+   ============================================================ */
+body {
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+.text-display-xl {
+  font-family: var(--font-sans);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 42px;
+  letter-spacing: -1.8px;
+}
+@media (min-width: 640px) {
+  .text-display-xl {
+    font-size: 48px;
+    line-height: 48px;
+    letter-spacing: -2.4px;
+  }
+}
+.text-heading-lg {
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -1.1px;
+}
+@media (min-width: 640px) {
+  .text-heading-lg { font-size: 32px; line-height: 40px; letter-spacing: -1.28px; }
+}
+.text-heading-md {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  letter-spacing: -0.4px;
+}
+.text-mono-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.text-body-lg { font-family: var(--font-sans); font-size: 16px; font-weight: 400; line-height: 24px; }
+.text-body-md { font-family: var(--font-sans); font-size: 14px; font-weight: 400; line-height: 20px; }
+.text-body-sm { font-family: var(--font-sans); font-size: 12px; font-weight: 400; line-height: 16px; }
+.text-button-md { font-family: var(--font-sans); font-size: 14px; font-weight: 500; line-height: 20px; }
+.text-button-lg { font-family: var(--font-sans); font-size: 16px; font-weight: 500; line-height: 20px; }
+
+/* ============================================================
+   The hero's ONE decorative flourish — the multi-stop mesh
+   gradient (cyan/blue/violet/magenta/amber). Confined to the
+   hero band only, per spec: "no second decorative system".
+   ============================================================ */
+.mesh-gradient {
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(at 18% 15%, color-mix(in srgb, #007cf0 55%, transparent) 0, transparent 45%),
+    radial-gradient(at 82% 8%, color-mix(in srgb, var(--violet) 55%, transparent) 0, transparent 45%),
+    radial-gradient(at 65% 55%, color-mix(in srgb, var(--pink) 40%, transparent) 0, transparent 45%),
+    radial-gradient(at 25% 75%, color-mix(in srgb, var(--cyan) 55%, transparent) 0, transparent 45%),
+    radial-gradient(at 92% 88%, color-mix(in srgb, var(--amber) 40%, transparent) 0, transparent 50%);
+  filter: blur(60px) saturate(1.15);
+  opacity: 0.55;
+}
+.dark .mesh-gradient {
+  opacity: 0.35;
 }
 
 /* Touch-perfect base — 44px+ tap targets everywhere by default */
 button, a[role="button"], .tap-target {
   min-height: 44px;
   min-width: 44px;
-}
-
-body {
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: contain;
 }

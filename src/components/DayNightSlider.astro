@@ -7,7 +7,7 @@ interface Props {
 const { tz, label, id } = Astro.props;
 ---
 <div class="day-night-slider" data-tz={tz} data-id={id}>
-  <div class="mb-1.5 flex items-center justify-between text-xs font-medium text-neutral-500 dark:text-neutral-400">
+  <div class="mb-1.5 flex items-center justify-between text-body-sm font-medium text-(--mute)">
     <span>{label}</span>
     <span class="sun-moon-icon text-base leading-none">🌙</span>
   </div>
@@ -17,7 +17,7 @@ const { tz, label, id } = Astro.props;
       style="width:0%"
     ></div>
     <div
-      class="thumb absolute top-1/2 h-4 w-4 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-white bg-yellow-400 shadow transition-[left] duration-500 ease-out"
+      class="thumb absolute top-1/2 h-4 w-4 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-(--canvas-elevated) bg-yellow-400 shadow transition-[left] duration-500 ease-out"
       style="left:0%"
     ></div>
   </div>

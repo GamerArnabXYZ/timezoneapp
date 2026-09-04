@@ -25,38 +25,38 @@ const swapHref = withBase(`/${toTz.slug}-to-${fromTz.slug}`);
 >
   <!-- Local-time auto-detect banner (Zero Input) — hidden until JS confirms a 3rd distinct zone -->
   <p
-    class="local-tz-banner mb-4 hidden rounded-xl border border-accent-500/20 bg-accent-500/5 px-4 py-2.5 text-center text-sm text-accent-600 dark:text-accent-500"
+    class="local-tz-banner mb-4 hidden rounded-[12px] border border-(--link-soft) bg-(--link-soft)/40 px-4 py-2.5 text-center text-body-md text-(--link-deep)"
   ></p>
 
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
     <!-- FROM card -->
-    <div class="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
-      <p class="text-sm text-neutral-500 dark:text-neutral-400">{fromTz.city}, {fromTz.country}</p>
-      <p class="clock-from mt-1 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+    <div class="rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5 shadow-[var(--shadow-whisper)]">
+      <p class="text-body-md text-(--mute)">{fromTz.city}, {fromTz.country}</p>
+      <p class="clock-from mt-1 text-3xl font-semibold tracking-tight tabular-nums text-(--ink) sm:text-4xl">
         {formatTime(fromTz.tz)}
       </p>
-      <p class="date-from mt-1 text-xs text-neutral-400 dark:text-neutral-600">{formatFullDate(fromTz.tz)}</p>
+      <p class="date-from mt-1 text-body-sm text-(--faint)">{formatFullDate(fromTz.tz)}</p>
       <div class="mt-4">
         <DayNightSlider tz={fromTz.tz} label={fromTz.abbr} id="from" />
       </div>
     </div>
 
-    <!-- Swap button -->
+    <!-- Swap button — button-icon-circular per DESIGN-vercel.md -->
     <a
       href={swapHref}
       aria-label={`Swap to ${toTz.city} to ${fromTz.city}`}
-      class="swap-btn tap-target mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-neutral-200 bg-white text-lg transition hover:rotate-180 active:scale-90 dark:border-neutral-800 dark:bg-neutral-900 sm:h-12 sm:w-12"
+      class="swap-btn tap-target mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-(--hairline) bg-(--canvas-elevated) text-lg text-(--ink) transition hover:rotate-180 active:scale-90 sm:h-12 sm:w-12"
     >
       ⇄
     </a>
 
     <!-- TO card -->
-    <div class="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
-      <p class="text-sm text-neutral-500 dark:text-neutral-400">{toTz.city}, {toTz.country}</p>
-      <p class="clock-to mt-1 text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
+    <div class="rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5 shadow-[var(--shadow-whisper)]">
+      <p class="text-body-md text-(--mute)">{toTz.city}, {toTz.country}</p>
+      <p class="clock-to mt-1 text-3xl font-semibold tracking-tight tabular-nums text-(--ink) sm:text-4xl">
         {formatTime(toTz.tz)}
       </p>
-      <p class="date-to mt-1 text-xs text-neutral-400 dark:text-neutral-600">{formatFullDate(toTz.tz)}</p>
+      <p class="date-to mt-1 text-body-sm text-(--faint)">{formatFullDate(toTz.tz)}</p>
       <div class="mt-4">
         <DayNightSlider tz={toTz.tz} label={toTz.abbr} id="to" />
       </div>
@@ -66,13 +66,13 @@ const swapHref = withBase(`/${toTz.slug}-to-${fromTz.slug}`);
   <!-- Diff badge -->
   <div class="mt-4 flex justify-center">
     <span
-      class="diff-badge rounded-full border border-neutral-200 px-4 py-1.5 text-xs font-medium text-neutral-600 dark:border-neutral-800 dark:text-neutral-300"
+      class="diff-badge rounded-full border border-(--hairline) px-4 py-1.5 text-body-sm font-medium text-(--body)"
       >{diffLabel}</span
     >
   </div>
 
   <!-- Share -->
-  <div class="mt-6 border-t border-neutral-100 pt-6 dark:border-neutral-900">
+  <div class="mt-6 border-t border-(--hairline) pt-6">
     <ShareLink />
   </div>
 </section>

@@ -27,24 +27,24 @@ const description = `See what ${label12} in ${city.city} (${city.abbr}) is in yo
 ---
 <Layout title={title} description={description} canonicalSlug={`t/${Astro.params.slug}`}>
   <main class="mx-auto max-w-md px-4 pt-12 text-center sm:pt-16">
-    <p class="text-sm text-neutral-500 dark:text-neutral-400">Someone shared a time with you</p>
-    <p class="mt-2 text-4xl font-semibold tracking-tight">{label12} <span class="text-neutral-400">{city.abbr}</span></p>
-    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{city.city}, {city.country}</p>
+    <p class="text-mono-eyebrow text-(--mute)">Someone shared a time with you</p>
+    <p class="text-display-xl mt-3 text-(--ink)">{label12} <span class="text-(--faint)">{city.abbr}</span></p>
+    <p class="text-body-md mt-1 text-(--body)">{city.city}, {city.country}</p>
 
     <div
       id="local-result"
-      class="mt-8 rounded-xl border border-accent-500/30 bg-accent-500/5 p-6"
+      class="mt-8 rounded-[12px] border border-(--link-soft) bg-(--link-soft)/40 p-6"
       data-hour24={hour24}
       data-source-tz={city.tz}
     >
-      <p class="text-xs uppercase tracking-wide text-accent-600 dark:text-accent-500">Your local time</p>
-      <p class="local-time mt-1 text-3xl font-bold tabular-nums">Detecting…</p>
-      <p class="local-date mt-1 text-xs text-neutral-400"></p>
+      <p class="text-mono-eyebrow text-(--link-deep)">Your local time</p>
+      <p class="local-time mt-1 text-3xl font-bold tabular-nums text-(--ink)">Detecting…</p>
+      <p class="local-date mt-1 text-body-sm text-(--faint)"></p>
     </div>
 
     <a
       href={withBase("/")}
-      class="tap-target mt-8 inline-flex items-center justify-center rounded-xl border border-neutral-200 px-5 py-3 text-sm font-medium dark:border-neutral-800"
+      class="tap-target mt-8 inline-flex items-center justify-center rounded-full bg-(--ink) px-6 text-button-lg text-(--canvas) transition active:scale-[0.97]"
     >
       Open full converter →
     </a>

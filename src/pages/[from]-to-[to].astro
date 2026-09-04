@@ -36,19 +36,22 @@ const schema = {
 ---
 <Layout title={title} description={description} canonicalSlug={canonicalSlug} schema={schema}>
   <main>
-    <h1 class="mx-auto max-w-3xl px-4 pt-8 text-center text-xl font-semibold sm:pt-10 sm:text-2xl">
-      {fromTz.city} to {toTz.city} Time Zone Converter
-    </h1>
-    <p class="mx-auto mt-2 max-w-3xl px-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
-      {fromTz.abbr} → {toTz.abbr} · Auto-updates every second · No sign-up needed
-    </p>
+    <div class="mx-auto max-w-3xl px-4 pt-10 text-center sm:pt-14">
+      <p class="text-mono-eyebrow text-(--mute)">Time zone converter</p>
+      <h1 class="text-heading-lg mt-2 text-(--ink)">
+        {fromTz.city} to {toTz.city}
+      </h1>
+      <p class="text-body-md mt-2 text-(--body)">
+        {fromTz.abbr} → {toTz.abbr} · Auto-updates every second · No sign-up needed
+      </p>
+    </div>
 
     <ConverterWidget fromTz={fromTz} toTz={toTz} />
 
     <AdSlot position="in-content" />
 
-    <section class="mx-auto max-w-3xl px-4 pb-12 text-sm text-neutral-600 dark:text-neutral-400">
-      <h2 class="mb-2 text-base font-semibold text-neutral-800 dark:text-neutral-200">
+    <section class="mx-auto max-w-3xl px-4 pb-12 text-body-md text-(--body)">
+      <h2 class="text-heading-md mb-2 text-(--ink)">
         Planning a call between {fromTz.city} and {toTz.city}?
       </h2>
       <p>

@@ -24,7 +24,7 @@ const canonicalURL = canonicalSlug
   <title>{title}</title>
   <meta name="description" content={description} />
   <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
 
   <meta property="og:type" content="website" />
   <meta property="og:title" content={title} />
@@ -38,6 +38,14 @@ const canonicalURL = canonicalSlug
     <script type="application/ld+json" set:html={JSON.stringify(schema)} />
   )}
 
+  <!-- Geist substitutes per DESIGN-vercel.md — Inter (sans) + JetBrains Mono (mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet"
+  />
+
   <script is:inline>
     // Zero-flash dark mode: apply before paint based on system preference (no input needed)
     if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
@@ -45,19 +53,19 @@ const canonicalURL = canonicalSlug
     }
   </script>
 </head>
-<body class="min-h-screen bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
+<body class="min-h-screen bg-(--canvas) text-(--ink) antialiased">
   <!-- Fixed-height ad slots => zero CLS. Swap the comment for your AdSense <ins> block. -->
-  <div class="ad-slot mx-auto flex w-full max-w-3xl items-center justify-center" style="min-height:90px;">
+  <div class="mx-auto flex w-full max-w-3xl items-center justify-center" style="min-height:90px;">
     <!-- AdSense top slot -->
   </div>
 
   <slot />
 
-  <div class="ad-slot mx-auto flex w-full max-w-3xl items-center justify-center" style="min-height:90px;">
+  <div class="mx-auto flex w-full max-w-3xl items-center justify-center" style="min-height:90px;">
     <!-- AdSense bottom slot -->
   </div>
 
-  <footer class="mx-auto max-w-3xl px-4 py-8 text-center text-xs text-neutral-400 dark:text-neutral-600">
+  <footer class="mx-auto max-w-3xl border-t border-(--hairline) px-4 py-8 text-center text-body-sm text-(--faint)">
     <p>Built with Astro · Times auto-detect from your device</p>
   </footer>
 </body>
