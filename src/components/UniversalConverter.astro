@@ -1,0 +1,145 @@
+---
+// The "automatic, not pre-made" converter — works for ALL 445 auto-generated
+// cities/timezones, entirely client-side. No static page needed per pair;
+// this is what covers every city that ISN'T one of the ~50 featured pSEO pages.
+import { ALL_TIMEZONES } from "../data/timezones";
+
+// Send the whole dataset to the browser once (city, slug, tz only — a few KB).
+const cityData = ALL_TIMEZONES.map((t) => ({ city: t.city, tz: t.tz, region: t.region }));
+---
+<div class="universal-converter rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5 shadow-[var(--shadow-whisper)]">
+  <p class="text-mono-eyebrow text-(--mute)">Universal converter · {cityData.length} cities</p>
+  <p class="text-heading-md mt-1 text-(--ink)">Convert between ANY two cities</p>
+  <p class="text-body-sm mt-1 text-(--faint)">Not just the pairs below — search literally any of the {cityData.length} timezones ICU knows about.</p>
+
+  <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+    <label class="block">
+      <span class="text-body-sm text-(--mute)">From</span>
+      <input
+        list="uc-cities"
+        id="uc-from"
+        type="text"
+        placeholder="Type a city…"
+        autocomplete="off"
+        class="tap-target mt-1 w-full rounded-[6px] border border-(--hairline) bg-(--canvas) px-3 text-body-md text-(--ink) outline-none focus:border-(--link)"
+      />
+    </label>
+
+    <button
+      type="button"
+      id="uc-swap"
+      aria-label="Swap cities"
+      class="tap-target mx-auto hidden h-11 w-11 items-center justify-center rounded-full border border-(--hairline) bg-(--canvas-elevated) text-lg text-(--ink) transition hover:rotate-180 active:scale-90 sm:flex"
+    >⇄</button>
+
+    <label class="block">
+      <span class="text-body-sm text-(--mute)">To</span>
+      <input
+        list="uc-cities"
+        id="uc-to"
+        type="text"
+        placeholder="Type a city…"
+        autocomplete="off"
+        class="tap-target mt-1 w-full rounded-[6px] border border-(--hairline) bg-(--canvas) px-3 text-body-md text-(--ink) outline-none focus:border-(--link)"
+      />
+    </label>
+  </div>
+
+  <datalist id="uc-cities">
+    {cityData.map((c) => <option value={c.city} />)}
+  </datalist>
+
+  <div id="uc-result" class="mt-4 hidden rounded-[12px] border border-(--link-soft) bg-(--link-soft)/30 p-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="uc-from-label text-body-sm text-(--mute)"></p>
+        <p class="uc-from-time text-2xl font-semibold tabular-nums text-(--ink)"></p>
+      </div>
+      <span class="text-(--faint)">→</span>
+      <div class="text-right">
+        <p class="uc-to-label text-body-sm text-(--mute)"></p>
+        <p class="uc-to-time text-2xl font-semibold tabular-nums text-(--ink)"></p>
+      </div>
+    </div>
+    <p class="uc-diff mt-2 text-center text-body-sm text-(--body)"></p>
+  </div>
+
+  <p id="uc-error" class="mt-3 hidden text-body-sm text-red-600"></p>
+</div>
+
+<script define:vars={{ cityData }}>
+  const byName = new Map(cityData.map((c) => [c.city.toLowerCase(), c]));
+
+  function fmtTime(tz) {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", hour12: true }).format(new Date());
+  }
+  function offsetMin(tz) {
+    const part = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "shortOffset" })
+      .formatToParts(new Date()).find((p) => p.type === "timeZoneName")?.value ?? "GMT+0";
+    const m = part.match(/GMT([+-]\d+)(?::(\d+))?/);
+    if (!m) return 0;
+    const h = parseInt(m[1], 10);
+    const mins = m[2] ? parseInt(m[2], 10) : 0;
+    return h * 60 + (h < 0 ? -mins : mins);
+  }
+
+  const fromInput = document.getElementById("uc-from");
+  const toInput = document.getElementById("uc-to");
+  const result = document.getElementById("uc-result");
+  const errorEl = document.getElementById("uc-error");
+  const swapBtn = document.getElementById("uc-swap");
+
+  function render() {
+    const from = byName.get(fromInput.value.trim().toLowerCase());
+    const to = byName.get(toInput.value.trim().toLowerCase());
+
+    if (!fromInput.value && !toInput.value) {
+      result.classList.add("hidden");
+      errorEl.classList.add("hidden");
+      swapBtn.classList.add("hidden");
+      return;
+    }
+    if (!from || !to) {
+      result.classList.add("hidden");
+      if (fromInput.value && toInput.value) {
+        errorEl.textContent = "Couldn't match one of those city names — pick one from the suggestions.";
+        errorEl.classList.remove("hidden");
+      } else {
+        errorEl.classList.add("hidden");
+      }
+      return;
+    }
+
+    errorEl.classList.add("hidden");
+    result.classList.remove("hidden");
+    swapBtn.classList.remove("hidden");
+
+    result.querySelector(".uc-from-label").textContent = from.city;
+    result.querySelector(".uc-to-label").textContent = to.city;
+    result.querySelector(".uc-from-time").textContent = fmtTime(from.tz);
+    result.querySelector(".uc-to-time").textContent = fmtTime(to.tz);
+
+    const diff = Math.round(((offsetMin(to.tz) - offsetMin(from.tz)) / 60) * 100) / 100;
+    result.querySelector(".uc-diff").textContent =
+      diff === 0 ? "Same time" : `${to.city} is ${Math.abs(diff)}h ${diff > 0 ? "ahead of" : "behind"} ${from.city}`;
+  }
+
+  fromInput.addEventListener("input", render);
+  toInput.addEventListener("input", render);
+  swapBtn.addEventListener("click", () => {
+    [fromInput.value, toInput.value] = [toInput.value, fromInput.value];
+    render();
+  });
+
+  // Zero-input: prefill "From" with the visitor's own detected city, if it matches one we know.
+  try {
+    const visitorTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const match = cityData.find((c) => c.tz === visitorTz);
+    if (match && !fromInput.value) {
+      fromInput.value = match.city;
+      render();
+    }
+  } catch {
+    /* ignore */
+  }
+</script>

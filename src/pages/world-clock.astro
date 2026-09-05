@@ -1,0 +1,152 @@
+---
+import Layout from "../layouts/Layout.astro";
+import AdSlot from "../components/AdSlot.astro";
+import { ALL_TIMEZONES } from "../data/timezones";
+import { withBase } from "../lib/tz-utils";
+
+const title = "World Clock — Track Multiple Time Zones at Once";
+const description = "Build your own multi-city world clock. Add any timezone, see live day/night status for all of them at once, and share your board with a link.";
+
+const cityData = ALL_TIMEZONES.map((t) => ({ city: t.city, tz: t.tz, slug: t.slug }));
+---
+<Layout title={title} description={description} canonicalSlug="world-clock">
+  <main class="mx-auto max-w-3xl px-4 pt-10 pb-12 sm:pt-14">
+    <p class="text-mono-eyebrow text-center text-(--mute)">World clock</p>
+    <h1 class="text-heading-lg mt-2 text-center text-(--ink)">Your multi-city board</h1>
+    <p class="text-body-md mx-auto mt-2 max-w-md text-center text-(--body)">
+      Add as many cities as you need. Your board saves in this browser and the link
+      updates so you can share it too.
+    </p>
+
+    <div class="mt-6 flex gap-2">
+      <input
+        list="wc-cities"
+        id="wc-input"
+        type="text"
+        placeholder="Add a city…"
+        autocomplete="off"
+        class="tap-target w-full rounded-[6px] border border-(--hairline) bg-(--canvas-elevated) px-3 text-body-md text-(--ink) outline-none focus:border-(--link)"
+      />
+      <button
+        id="wc-add"
+        type="button"
+        class="tap-target shrink-0 rounded-[6px] border border-(--hairline) bg-(--canvas-elevated) px-4 text-button-md text-(--ink)"
+      >
+        Add
+      </button>
+    </div>
+    <datalist id="wc-cities">
+      {cityData.map((c) => <option value={c.city} />)}
+    </datalist>
+
+    <div id="wc-board" class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"></div>
+
+    <p id="wc-empty" class="mt-8 hidden text-center text-body-md text-(--faint)">
+      No cities yet — add one above to start your board.
+    </p>
+
+    <div class="mt-8">
+      <AdSlot position="in-content" />
+    </div>
+  </main>
+</Layout>
+
+<script define:vars={{ cityData, basePath: withBase("/world-clock") }}>
+  const byName = new Map(cityData.map((c) => [c.city.toLowerCase(), c]));
+  const bySlug = new Map(cityData.map((c) => [c.slug, c]));
+  const STORAGE_KEY = "wc-board";
+
+  function readInitialSlugs() {
+    const params = new URLSearchParams(location.search);
+    const fromUrl = params.get("cities");
+    if (fromUrl) return fromUrl.split(",").filter((s) => bySlug.has(s));
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+      if (Array.isArray(saved) && saved.length) return saved.filter((s) => bySlug.has(s));
+    } catch { /* ignore */ }
+    // Sensible zero-input default: visitor's own zone + UTC.
+    try {
+      const visitorTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const match = cityData.find((c) => c.tz === visitorTz);
+      return match ? [match.slug, "utc"] : ["utc"];
+    } catch {
+      return ["utc"];
+    }
+  }
+
+  let slugs = readInitialSlugs();
+
+  function persist() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(slugs));
+    const url = new URL(location.href);
+    if (slugs.length) url.searchParams.set("cities", slugs.join(","));
+    else url.searchParams.delete("cities");
+    history.replaceState(null, "", url);
+  }
+
+  function fmtTime(tz) {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", hour12: true }).format(new Date());
+  }
+  function fmtDate(tz) {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", month: "short", day: "numeric" }).format(new Date());
+  }
+  function hourIn(tz) {
+    return parseInt(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour12: false, hour: "2-digit" }).format(new Date()), 10) % 24;
+  }
+
+  const board = document.getElementById("wc-board");
+  const empty = document.getElementById("wc-empty");
+
+  function render() {
+    board.innerHTML = "";
+    empty.classList.toggle("hidden", slugs.length > 0);
+
+    for (const slug of slugs) {
+      const c = bySlug.get(slug);
+      if (!c) continue;
+      const card = document.createElement("div");
+      card.className = "rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-4 shadow-[var(--shadow-whisper)]";
+      card.innerHTML = `
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-body-md text-(--mute)">${c.city}</p>
+            <p class="wc-time text-2xl font-semibold tabular-nums text-(--ink)"></p>
+            <p class="wc-date text-body-sm text-(--faint)"></p>
+          </div>
+          <button data-remove="${slug}" aria-label="Remove ${c.city}" class="tap-target text-(--faint) hover:text-(--ink)">✕</button>
+        </div>
+      `;
+      board.appendChild(card);
+      const tick = () => {
+        card.querySelector(".wc-time").textContent = fmtTime(c.tz);
+        card.querySelector(".wc-date").textContent = `${fmtDate(c.tz)} · ${hourIn(c.tz) >= 6 && hourIn(c.tz) < 19 ? "☀️" : "🌙"}`;
+      };
+      tick();
+      setInterval(tick, 30_000);
+    }
+
+    board.querySelectorAll("[data-remove]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        slugs = slugs.filter((s) => s !== btn.dataset.remove);
+        persist();
+        render();
+      });
+    });
+  }
+
+  document.getElementById("wc-add").addEventListener("click", () => {
+    const input = document.getElementById("wc-input");
+    const match = byName.get(input.value.trim().toLowerCase());
+    if (!match) return;
+    if (!slugs.includes(match.slug)) slugs.push(match.slug);
+    input.value = "";
+    persist();
+    render();
+  });
+
+  document.getElementById("wc-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("wc-add").click();
+  });
+
+  render();
+</script>

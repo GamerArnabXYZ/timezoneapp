@@ -3,12 +3,12 @@
 // Visitor's OWN local time is still computed 100% client-side (Zero Input, via Intl) at view time.
 import Layout from "../../layouts/Layout.astro";
 import AdSlot from "../../components/AdSlot.astro";
-import { TIMEZONES, findCity } from "../../data/timezones";
-import { buildShareSlug, withBase } from "../../lib/tz-utils";
+import { FEATURED_TIMEZONES } from "../../data/timezones";
+import { buildShareSlug, withBase, getAbbr } from "../../lib/tz-utils";
 
 export function getStaticPaths() {
   const paths = [];
-  for (const city of TIMEZONES) {
+  for (const city of FEATURED_TIMEZONES) {
     for (let hour24 = 0; hour24 < 24; hour24++) {
       const slug = buildShareSlug(hour24, city.slug);
       paths.push({ params: { slug }, props: { hour24, city } });
@@ -18,18 +18,19 @@ export function getStaticPaths() {
 }
 
 const { hour24, city } = Astro.props;
+const cityAbbr = getAbbr(city.tz);
 const label12 = new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: true }).format(
   new Date(2026, 0, 1, hour24)
 );
 
-const title = `${label12} ${city.abbr} in Your Local Time`;
-const description = `See what ${label12} in ${city.city} (${city.abbr}) is in your own time zone — auto-detected instantly, no sign-up.`;
+const title = `${label12} ${cityAbbr} in Your Local Time`;
+const description = `See what ${label12} in ${city.city} (${cityAbbr}) is in your own time zone — auto-detected instantly, no sign-up.`;
 ---
 <Layout title={title} description={description} canonicalSlug={`t/${Astro.params.slug}`}>
   <main class="mx-auto max-w-md px-4 pt-12 text-center sm:pt-16">
     <p class="text-mono-eyebrow text-(--mute)">Someone shared a time with you</p>
-    <p class="text-display-xl mt-3 text-(--ink)">{label12} <span class="text-(--faint)">{city.abbr}</span></p>
-    <p class="text-body-md mt-1 text-(--body)">{city.city}, {city.country}</p>
+    <p class="text-display-xl mt-3 text-(--ink)">{label12} <span class="text-(--faint)">{cityAbbr}</span></p>
+    <p class="text-body-md mt-1 text-(--body)">{city.city} · {city.region}</p>
 
     <div
       id="local-result"

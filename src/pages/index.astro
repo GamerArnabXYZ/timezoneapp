@@ -1,7 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import AdSlot from "../components/AdSlot.astro";
-import { TIMEZONES } from "../data/timezones";
+import UniversalConverter from "../components/UniversalConverter.astro";
+import { ALL_TIMEZONES } from "../data/timezones";
 import { withBase } from "../lib/tz-utils";
 
 const title = "Universal Time & Timezone Sync — Meeting Planner";
@@ -16,7 +17,7 @@ const popular = [
   ["tokyo", "new-york"], ["sydney", "new-york"],
 ];
 function cityName(slug: string) {
-  return TIMEZONES.find((t) => t.slug === slug)?.city ?? slug;
+  return ALL_TIMEZONES.find((t) => t.slug === slug)?.city ?? slug;
 }
 ---
 <Layout title={title} description={description}>
@@ -24,9 +25,9 @@ function cityName(slug: string) {
   <section class="relative overflow-hidden border-b border-(--hairline)">
     <div class="mesh-gradient" aria-hidden="true"></div>
     <div class="relative z-10 mx-auto max-w-3xl px-4 py-16 text-center sm:py-24">
-      <p class="text-mono-eyebrow text-(--mute)">Free · No sign-up · Zero input</p>
-      <h1 class="text-display-xl mt-3 text-(--ink)">Universal Time &amp; Timezone Sync</h1>
-      <p class="text-body-lg mx-auto mt-4 max-w-xl text-(--body)">
+      <p class="text-mono-eyebrow animate-fade-up text-(--mute)">Free · No sign-up · Zero input</p>
+      <h1 class="text-display-xl animate-fade-up mt-3 text-(--ink)" style="animation-delay:0.05s">Universal Time &amp; Timezone Sync</h1>
+      <p class="text-body-lg animate-fade-up mx-auto mt-4 max-w-xl text-(--body)" style="animation-delay:0.1s">
         Pick two cities, see live day/night clocks, and share the exact meeting time — no manual
         timezone math, ever.
       </p>
@@ -34,23 +35,28 @@ function cityName(slug: string) {
       <div id="auto-detect-cta" class="mx-auto mt-6 hidden max-w-md rounded-[12px] border border-(--link-soft) bg-(--link-soft)/40 p-4">
         <p class="text-body-md text-(--link-deep)">
           📍 Looks like you're in <span class="detected-tz font-semibold"></span> —
-          <a href="#popular" class="underline">jump to popular pairs</a>
+          <a href="#universal" class="underline">try the converter</a>
         </p>
       </div>
 
       <a
-        href="#popular"
-        class="tap-target mt-8 inline-flex items-center justify-center rounded-full bg-(--ink) px-6 text-button-lg text-(--canvas) transition active:scale-[0.97]"
+        href="#universal"
+        class="tap-target animate-fade-up mt-8 inline-flex items-center justify-center rounded-full bg-(--ink) px-6 text-button-lg text-(--canvas) transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-floating)] active:scale-[0.97]"
+        style="animation-delay:0.15s"
       >
-        Browse conversions
+        Start converting
       </a>
     </div>
   </section>
 
   <main class="mx-auto max-w-3xl px-4 pb-6">
+    <section id="universal" class="pt-12 sm:pt-16">
+      <UniversalConverter />
+    </section>
+
     <section id="popular" class="pt-12 text-left sm:pt-16">
       <p class="text-mono-eyebrow text-center text-(--mute)">Popular conversions</p>
-      <h2 class="text-heading-md mt-2 text-center text-(--ink)">Jump straight to a pair</h2>
+      <h2 class="text-heading-md mt-2 text-center text-(--ink)">Or jump straight to a pair</h2>
       <div class="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {popular.map(([from, to]) => (
           <a
@@ -62,6 +68,9 @@ function cityName(slug: string) {
           </a>
         ))}
       </div>
+      <p class="mt-4 text-center text-body-sm text-(--faint)">
+        <a href={withBase("/world-clock")} class="underline">Or build a multi-city World Clock →</a>
+      </p>
     </section>
 
     <div class="mt-8">

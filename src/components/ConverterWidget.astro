@@ -1,7 +1,10 @@
 ---
 import DayNightSlider from "./DayNightSlider.astro";
 import ShareLink from "./ShareLink.astro";
-import { formatTime, formatFullDate, diffHours, withBase } from "../lib/tz-utils";
+import {
+  formatTime, formatFullDate, diffHours, withBase,
+  getWeeklyMeetingMap, getFairRotationSuggestion,
+} from "../lib/tz-utils";
 import type { TZCity } from "../data/timezones";
 
 interface Props {
@@ -15,12 +18,19 @@ const diffLabel =
   diff === 0 ? "Same time" : `${diff > 0 ? "+" : ""}${diff}h ${diff > 0 ? "ahead" : "behind"}`;
 
 const swapHref = withBase(`/${toTz.slug}-to-${fromTz.slug}`);
+
+const weeklyMap = getWeeklyMeetingMap(fromTz.tz, toTz.tz);
+const hasAnyWeekdayOverlap = weeklyMap.slice(0, 5).some((d) => d.windowLabel);
+const rotation = hasAnyWeekdayOverlap ? null : getFairRotationSuggestion(fromTz.tz, toTz.tz);
 ---
 <section
   data-widget
+  data-from-tz={fromTz.tz}
+  data-to-tz={toTz.tz}
   data-from-tz-key={fromTz.slug}
   data-to-tz-key={toTz.slug}
   data-current-hour24="12"
+  data-hour12="true"
   class="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12"
 >
   <!-- Local-time auto-detect banner (Zero Input) — hidden until JS confirms a 3rd distinct zone -->
@@ -28,16 +38,35 @@ const swapHref = withBase(`/${toTz.slug}-to-${fromTz.slug}`);
     class="local-tz-banner mb-4 hidden rounded-[12px] border border-(--link-soft) bg-(--link-soft)/40 px-4 py-2.5 text-center text-body-md text-(--link-deep)"
   ></p>
 
+  <!-- Toolbar: live/date pill + 12h/24h toggle -->
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <span class="live-pill inline-flex items-center gap-1.5 rounded-full border border-(--hairline) bg-(--canvas-elevated) px-3 py-1 text-body-sm text-(--body)">
+        <span class="live-dot h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+        <span class="live-text">Live</span>
+      </span>
+      <input
+        id="date-picker"
+        type="date"
+        class="tap-target rounded-[6px] border border-(--hairline) bg-(--canvas-elevated) px-2 text-body-sm text-(--ink)"
+      />
+    </div>
+    <div class="hour-toggle inline-flex rounded-[6px] border border-(--hairline) p-0.5 text-body-sm">
+      <button type="button" data-mode="12" class="toggle-btn is-active rounded-[4px] px-3 py-1 text-(--ink)">12h</button>
+      <button type="button" data-mode="24" class="toggle-btn rounded-[4px] px-3 py-1 text-(--mute)">24h</button>
+    </div>
+  </div>
+
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
     <!-- FROM card -->
-    <div class="rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5 shadow-[var(--shadow-whisper)]">
-      <p class="text-body-md text-(--mute)">{fromTz.city}, {fromTz.country}</p>
+    <div class="rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5 shadow-[var(--shadow-whisper)] transition-shadow hover:shadow-[var(--shadow-floating)]">
+      <p class="text-body-md text-(--mute)">{fromTz.city}</p>
       <p class="clock-from mt-1 text-3xl font-semibold tracking-tight tabular-nums text-(--ink) sm:text-4xl">
         {formatTime(fromTz.tz)}
       </p>
       <p class="date-from mt-1 text-body-sm text-(--faint)">{formatFullDate(fromTz.tz)}</p>
       <div class="mt-4">
-        <DayNightSlider tz={fromTz.tz} label={fromTz.abbr} id="from" />
+        <DayNightSlider tz={fromTz.tz} id="from" />
       </div>
     </div>
 
@@ -45,20 +74,20 @@ const swapHref = withBase(`/${toTz.slug}-to-${fromTz.slug}`);
     <a
       href={swapHref}
       aria-label={`Swap to ${toTz.city} to ${fromTz.city}`}
-      class="swap-btn tap-target mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-(--hairline) bg-(--canvas-elevated) text-lg text-(--ink) transition hover:rotate-180 active:scale-90 sm:h-12 sm:w-12"
+      class="swap-btn tap-target mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-(--hairline) bg-(--canvas-elevated) text-lg text-(--ink) shadow-[var(--shadow-whisper)] transition hover:rotate-180 hover:shadow-[var(--shadow-floating)] active:scale-90 sm:h-12 sm:w-12"
     >
       ⇄
     </a>
 
     <!-- TO card -->
-    <div class="rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5 shadow-[var(--shadow-whisper)]">
-      <p class="text-body-md text-(--mute)">{toTz.city}, {toTz.country}</p>
+    <div class="rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5 shadow-[var(--shadow-whisper)] transition-shadow hover:shadow-[var(--shadow-floating)]">
+      <p class="text-body-md text-(--mute)">{toTz.city}</p>
       <p class="clock-to mt-1 text-3xl font-semibold tracking-tight tabular-nums text-(--ink) sm:text-4xl">
         {formatTime(toTz.tz)}
       </p>
       <p class="date-to mt-1 text-body-sm text-(--faint)">{formatFullDate(toTz.tz)}</p>
       <div class="mt-4">
-        <DayNightSlider tz={toTz.tz} label={toTz.abbr} id="to" />
+        <DayNightSlider tz={toTz.tz} id="to" />
       </div>
     </div>
   </div>
@@ -71,35 +100,195 @@ const swapHref = withBase(`/${toTz.slug}-to-${fromTz.slug}`);
     >
   </div>
 
+  <!-- Time-travel scrubber — drag to preview any hour of the day, both clocks follow -->
+  <div class="mt-6 rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5">
+    <div class="flex items-center justify-between">
+      <p class="text-mono-eyebrow text-(--mute)">Drag to time-travel</p>
+      <button id="jump-to-now" type="button" class="hidden text-body-sm font-medium text-(--link)">↺ Jump to now</button>
+    </div>
+    <p class="scrub-label mt-1 text-heading-md text-(--ink)">Right now</p>
+    <input
+      id="time-scrubber"
+      type="range"
+      min="0"
+      max="1439"
+      step="15"
+      value="720"
+      class="tap-target mt-3 w-full accent-(--link)"
+      aria-label="Scrub through the day"
+    />
+    <div class="mt-1 flex justify-between text-body-sm text-(--faint)">
+      <span>12 AM</span><span>Noon</span><span>11:59 PM</span>
+    </div>
+  </div>
+
+  <!-- Weekly meeting map — accounts for weekends AND date-line rollover, not just "today" -->
+  <div class="mt-4 rounded-[12px] border border-(--hairline) bg-(--canvas-elevated) p-5">
+    <p class="text-mono-eyebrow text-(--mute)">This week's best overlap</p>
+    <div class="mt-3 space-y-2">
+      {weeklyMap.map((d) => (
+        <div class="flex items-center gap-3">
+          <span class="w-8 shrink-0 text-body-sm text-(--faint)">{d.day}</span>
+          <div class="flex flex-1 gap-[2px]">
+            {d.hours.map((row) => (
+              <div class={`h-4 flex-1 rounded-[2px] ${row.good ? "bg-(--link)" : "bg-(--hairline)"}`}></div>
+            ))}
+          </div>
+          <span class="w-24 shrink-0 text-right text-body-sm text-(--faint)">{d.windowLabel ?? "—"}</span>
+        </div>
+      ))}
+    </div>
+    <p class="mt-2 text-body-sm text-(--faint)">Bars are hours 12 AM–11 PM in {fromTz.city} time. Blue = good meeting hours on both sides.</p>
+  </div>
+
+  {rotation && (
+    <div class="mt-4 rounded-[12px] border border-(--amber)/40 bg-(--amber)/10 p-5">
+      <p class="text-mono-eyebrow text-(--mute)">⚖️ Fair meeting rotator</p>
+      <p class="text-body-md mt-1 text-(--body)">
+        {fromTz.city} and {toTz.city} barely overlap during work hours — someone always takes an
+        early or late call. Rotate between these two slots so the pain is shared fairly:
+      </p>
+      <div class="mt-3 grid grid-cols-2 gap-2">
+        <div class="rounded-[6px] border border-(--hairline) bg-(--canvas-elevated) p-3 text-center">
+          <p class="text-body-sm text-(--faint)">Week A</p>
+          <p class="text-body-md font-medium text-(--ink)">{rotation.slotA.fromLabel} <span class="text-(--faint)">your time</span></p>
+          <p class="text-body-sm text-(--faint)">{rotation.slotA.toLabel} for them</p>
+        </div>
+        <div class="rounded-[6px] border border-(--hairline) bg-(--canvas-elevated) p-3 text-center">
+          <p class="text-body-sm text-(--faint)">Week B</p>
+          <p class="text-body-md font-medium text-(--ink)">{rotation.slotB.fromLabel} <span class="text-(--faint)">your time</span></p>
+          <p class="text-body-sm text-(--faint)">{rotation.slotB.toLabel} for them</p>
+        </div>
+      </div>
+    </div>
+  )}
+
   <!-- Share -->
   <div class="mt-6 border-t border-(--hairline) pt-6">
     <ShareLink />
   </div>
 </section>
 
-<script define:vars={{ fromTzName: fromTz.tz, toTzName: toTz.tz, fromKey: fromTz.slug, toKey: toTz.slug }}>
-  // Live tick — updates both clocks + diff + share-widget state every second. No page reload needed.
-  function fmtTime(tz) {
-    return new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", hour12: true }).format(new Date());
+<script define:vars={{ fromTzName: fromTz.tz, toTzName: toTz.tz }}>
+  function fmtTime(tz, hour12, instant) {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", hour12 }).format(instant);
   }
-  function hour24(tz) {
-    return parseInt(
-      new Intl.DateTimeFormat("en-US", { timeZone: tz, hour12: false, hour: "2-digit" }).format(new Date()),
-      10
-    ) % 24;
+  function fmtFullDate(tz, instant) {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "long", month: "long", day: "numeric" }).format(instant);
+  }
+  function hour24In(tz, instant) {
+    return parseInt(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour12: false, hour: "2-digit" }).format(instant), 10) % 24;
+  }
+  function minutesOfDayIn(tz, instant) {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour12: false, hour: "2-digit", minute: "2-digit" }).formatToParts(instant);
+    const h = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10) % 24;
+    const m = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
+    return h * 60 + m;
   }
 
-  function tick() {
-    const widget = document.querySelector("[data-widget]");
-    if (!widget) return;
-    const clockFrom = widget.querySelector(".clock-from");
-    const clockTo = widget.querySelector(".clock-to");
-    if (clockFrom) clockFrom.textContent = fmtTime(fromTzName);
-    if (clockTo) clockTo.textContent = fmtTime(toTzName);
-    widget.dataset.currentHour24 = String(hour24(fromTzName));
+  const widget = document.querySelector("[data-widget]");
+  if (widget) {
+    let previewInstant = null; // null = live mode
+
+    function currentInstant() {
+      return previewInstant ?? new Date();
+    }
+
+    function render() {
+      const instant = currentInstant();
+      const hour12 = widget.dataset.hour12 !== "false";
+      const clockFrom = widget.querySelector(".clock-from");
+      const clockTo = widget.querySelector(".clock-to");
+      const dateFrom = widget.querySelector(".date-from");
+      const dateTo = widget.querySelector(".date-to");
+      if (clockFrom) clockFrom.textContent = fmtTime(fromTzName, hour12, instant);
+      if (clockTo) clockTo.textContent = fmtTime(toTzName, hour12, instant);
+      if (dateFrom) dateFrom.textContent = fmtFullDate(fromTzName, instant);
+      if (dateTo) dateTo.textContent = fmtFullDate(toTzName, instant);
+      widget.dataset.currentHour24 = String(hour24In(fromTzName, instant));
+
+      document.dispatchEvent(new CustomEvent("tz-preview", { detail: { instant: previewInstant } }));
+    }
+
+    render();
+    const liveTimer = setInterval(() => { if (!previewInstant) render(); }, 1000);
+
+    // 12h / 24h toggle
+    document.querySelectorAll(".toggle-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        widget.dataset.hour12 = String(btn.dataset.mode === "12");
+        document.querySelectorAll(".toggle-btn").forEach((b) => {
+          b.classList.toggle("is-active", b === btn);
+          b.classList.toggle("text-(--ink)", b === btn);
+          b.classList.toggle("text-(--mute)", b !== btn);
+        });
+        render();
+      });
+    });
+
+    // Time-travel scrubber
+    const scrubber = document.getElementById("time-scrubber");
+    const scrubLabel = widget.querySelector(".scrub-label");
+    const livePill = widget.querySelector(".live-pill");
+    const jumpBtn = document.getElementById("jump-to-now");
+    const datePicker = document.getElementById("date-picker");
+    const todayISO = new Date().toISOString().slice(0, 10);
+    if (datePicker) datePicker.value = todayISO;
+
+    function setPreviewFromScrubber() {
+      const minutes = parseInt(scrubber.value, 10);
+      const dateStr = datePicker.value || todayISO;
+      const [y, m, d] = dateStr.split("-").map(Number);
+      // Build the instant as "minutes-of-day in fromTz's wall clock" on the picked date.
+      // Approximation: apply today's fromTz offset uniformly (DST edge cases aside).
+      const naiveUTC = Date.UTC(y, m - 1, d, 0, minutes, 0);
+      const probeOffset = new Intl.DateTimeFormat("en-US", { timeZone: fromTzName, timeZoneName: "shortOffset" })
+        .formatToParts(new Date(naiveUTC)).find((p) => p.type === "timeZoneName")?.value ?? "GMT+0";
+      const om = probeOffset.match(/GMT([+-]\d+)(?::(\d+))?/);
+      const offMin = om ? parseInt(om[1], 10) * 60 + (parseInt(om[1], 10) < 0 ? -(parseInt(om[2] || "0", 10)) : parseInt(om[2] || "0", 10)) : 0;
+      previewInstant = new Date(naiveUTC - offMin * 60_000);
+
+      const isNow = dateStr === todayISO && Math.abs(minutesOfDayIn(fromTzName, previewInstant) - minutesOfDayIn(fromTzName, new Date())) < 20;
+      if (isNow) {
+        previewInstant = null;
+      }
+      updateLiveUI();
+      render();
+    }
+
+    function updateLiveUI() {
+      const isLive = !previewInstant;
+      livePill?.classList.toggle("border-emerald-500/40", isLive);
+      widget.querySelector(".live-dot")?.classList.toggle("bg-emerald-500", isLive);
+      widget.querySelector(".live-dot")?.classList.toggle("bg-(--amber)", !isLive);
+      const liveText = widget.querySelector(".live-text");
+      if (liveText) liveText.textContent = isLive ? "Live" : "Previewing";
+      if (jumpBtn) jumpBtn.classList.toggle("hidden", isLive);
+      if (scrubLabel) {
+        scrubLabel.textContent = isLive
+          ? "Right now"
+          : fmtTime(fromTzName, true, previewInstant) + " " + fmtFullDate(fromTzName, previewInstant).split(",")[0];
+      }
+    }
+
+    scrubber?.addEventListener("input", setPreviewFromScrubber);
+    datePicker?.addEventListener("change", setPreviewFromScrubber);
+    jumpBtn?.addEventListener("click", () => {
+      previewInstant = null;
+      datePicker.value = todayISO;
+      scrubber.value = String(minutesOfDayIn(fromTzName, new Date()));
+      updateLiveUI();
+      render();
+    });
+
+    // Keep the scrubber's own thumb honest with the live clock while in live mode.
+    setInterval(() => {
+      if (!previewInstant && scrubber && document.activeElement !== scrubber) {
+        scrubber.value = String(minutesOfDayIn(fromTzName, new Date()));
+      }
+    }, 30_000);
+    updateLiveUI();
   }
-  tick();
-  setInterval(tick, 1000);
 
   // Zero-input auto-detect: if visitor's own tz differs from BOTH from/to, show a helper banner.
   try {
@@ -107,12 +296,12 @@ const swapHref = withBase(`/${toTz.slug}-to-${fromTz.slug}`);
     if (visitorTz && visitorTz !== fromTzName && visitorTz !== toTzName) {
       const banner = document.querySelector(".local-tz-banner");
       if (banner) {
-        const time = fmtTime(visitorTz);
+        const time = fmtTime(visitorTz, true, new Date());
         banner.textContent = `📍 Your local time (${visitorTz.split("/").pop()?.replace("_", " ")}): ${time}`;
         banner.classList.remove("hidden");
       }
     }
   } catch {
-    // Intl.resolvedOptions unsupported — silently skip, banner stays hidden
+    /* Intl.resolvedOptions unsupported — silently skip, banner stays hidden */
   }
 </script>

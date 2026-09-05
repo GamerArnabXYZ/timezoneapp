@@ -1,0 +1,13 @@
+{
+  "name": "Universal Time & Timezone Sync",
+  "short_name": "TZ Sync",
+  "description": "Convert time between any two cities, find the best meeting window, and share the exact time — instantly.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#171717",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,51 +1,65 @@
 ---
 interface Props {
-  tz: string;      // IANA tz name
-  label: string;   // city display name
-  id: string;      // unique dom id suffix (e.g. "from" / "to")
+  tz: string; // IANA tz name — abbreviation + offset are computed live, never hardcoded
+  id: string; // unique dom id suffix (e.g. "from" / "to")
 }
-const { tz, label, id } = Astro.props;
+const { tz, id } = Astro.props;
+
+const initialAbbr = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "short" })
+  .formatToParts(new Date())
+  .find((p) => p.type === "timeZoneName")?.value ?? tz;
 ---
 <div class="day-night-slider" data-tz={tz} data-id={id}>
   <div class="mb-1.5 flex items-center justify-between text-body-sm font-medium text-(--mute)">
-    <span>{label}</span>
+    <span class="tz-abbr">{initialAbbr}</span>
     <span class="sun-moon-icon text-base leading-none">🌙</span>
   </div>
   <div class="relative h-2 w-full overflow-hidden rounded-full bg-gradient-to-r from-indigo-950 via-sky-300 to-indigo-950">
     <div
-      class="track-fill absolute inset-y-0 left-0 rounded-full bg-white/0 transition-[width] duration-500 ease-out"
-      style="width:0%"
-    ></div>
-    <div
-      class="thumb absolute top-1/2 h-4 w-4 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-(--canvas-elevated) bg-yellow-400 shadow transition-[left] duration-500 ease-out"
+      class="thumb absolute top-1/2 h-4 w-4 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-(--canvas-elevated) bg-yellow-400 shadow transition-[left] duration-300 ease-out"
       style="left:0%"
     ></div>
   </div>
 </div>
 
 <script>
-  // Runs client-side for every .day-night-slider instance, updates every 30s — live day/night visual.
-  function updateSlider(el: HTMLElement) {
+  // Runs client-side for every .day-night-slider instance. Listens for the
+  // ConverterWidget's "tz-preview" event so dragging the time-travel scrubber
+  // moves this indicator too — falls back to the real live clock otherwise.
+  let previewInstant: Date | null = null;
+
+  function updateSlider(el: HTMLElement, instant: Date) {
     const tz = el.dataset.tz!;
-    const now = new Date();
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone: tz, hour12: false, hour: "2-digit", minute: "2-digit",
-    }).formatToParts(now);
+    }).formatToParts(instant);
     const hour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
     const minute = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
-    const progress = (hour * 60 + minute) / 1440; // 0..1
+    const progress = (hour * 60 + minute) / 1440;
     const pct = (progress * 100).toFixed(2);
+
+    const abbr = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "short" })
+      .formatToParts(instant)
+      .find((p) => p.type === "timeZoneName")?.value ?? tz;
 
     const thumb = el.querySelector<HTMLElement>(".thumb");
     const icon = el.querySelector<HTMLElement>(".sun-moon-icon");
+    const abbrEl = el.querySelector<HTMLElement>(".tz-abbr");
     if (thumb) thumb.style.left = `${pct}%`;
     if (icon) icon.textContent = hour >= 6 && hour < 19 ? "☀️" : "🌙";
+    if (abbrEl) abbrEl.textContent = abbr;
   }
 
   function tick() {
-    document.querySelectorAll<HTMLElement>(".day-night-slider").forEach(updateSlider);
+    const instant = previewInstant ?? new Date();
+    document.querySelectorAll<HTMLElement>(".day-night-slider").forEach((el) => updateSlider(el, instant));
   }
 
+  document.addEventListener("tz-preview", ((e: CustomEvent) => {
+    previewInstant = e.detail?.instant ? new Date(e.detail.instant) : null;
+    tick();
+  }) as EventListener);
+
   tick();
-  setInterval(tick, 30_000);
+  setInterval(() => { if (!previewInstant) tick(); }, 30_000);
 </script>

@@ -2,12 +2,13 @@
 import Layout from "../layouts/Layout.astro";
 import ConverterWidget from "../components/ConverterWidget.astro";
 import AdSlot from "../components/AdSlot.astro";
-import { TIMEZONES } from "../data/timezones";
+import { FEATURED_TIMEZONES } from "../data/timezones";
+import { getAbbr, bestMeetingWindow } from "../lib/tz-utils";
 
 export function getStaticPaths() {
   const paths = [];
-  for (const from of TIMEZONES) {
-    for (const to of TIMEZONES) {
+  for (const from of FEATURED_TIMEZONES) {
+    for (const to of FEATURED_TIMEZONES) {
       if (from.slug === to.slug) continue;
       paths.push({
         params: { from: from.slug, to: to.slug },
@@ -19,9 +20,12 @@ export function getStaticPaths() {
 }
 
 const { fromTz, toTz } = Astro.props;
+const fromAbbr = getAbbr(fromTz.tz);
+const toAbbr = getAbbr(toTz.tz);
+const meeting = bestMeetingWindow(fromTz.tz, toTz.tz);
 
-const title = `${fromTz.city} to ${toTz.city} Time Zone Converter — ${fromTz.abbr} to ${toTz.abbr}`;
-const description = `Convert ${fromTz.city} (${fromTz.abbr}) time to ${toTz.city} (${toTz.abbr}) instantly. Live clocks, day/night visual, and a one-click shareable meeting link.`;
+const title = `${fromTz.city} to ${toTz.city} Time Zone Converter — ${fromAbbr} to ${toAbbr}`;
+const description = `Convert ${fromTz.city} (${fromAbbr}) time to ${toTz.city} (${toAbbr}) instantly. Live clocks, day/night visual, best-meeting-time finder, and a one-click shareable link.`;
 const canonicalSlug = `${fromTz.slug}-to-${toTz.slug}`;
 
 const schema = {
@@ -42,7 +46,7 @@ const schema = {
         {fromTz.city} to {toTz.city}
       </h1>
       <p class="text-body-md mt-2 text-(--body)">
-        {fromTz.abbr} → {toTz.abbr} · Auto-updates every second · No sign-up needed
+        {fromAbbr} → {toAbbr} · Auto-updates every second · No sign-up needed
       </p>
     </div>
 
@@ -55,9 +59,12 @@ const schema = {
         Planning a call between {fromTz.city} and {toTz.city}?
       </h2>
       <p>
-        {fromTz.city} runs on {fromTz.abbr}, while {toTz.city} uses {toTz.abbr}. Use the slider above
-        to see daylight hours at a glance, then tap "Copy shareable link" to send an exact meeting
-        time that auto-converts to whoever opens it — wherever they are.
+        {fromTz.city} runs on {fromAbbr}, while {toTz.city} uses {toAbbr}.
+        {meeting
+          ? ` The best overlap for a meeting is typically ${meeting.label} ${fromTz.city} time — both sides land in normal working hours.`
+          : ` These zones barely overlap during normal working hours — one side will need to take an early or late call.`}
+        {" "}Use the slider above to see daylight hours at a glance, then tap "Copy shareable link" to
+        send an exact meeting time that auto-converts to whoever opens it — wherever they are.
       </p>
     </section>
   </main>
